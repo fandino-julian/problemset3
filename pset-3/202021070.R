@@ -19,20 +19,23 @@ file_list <- list.files(path = ruta_input, recursive = TRUE, full.names = TRUE)
 # Imprimir la lista de archivos
 print(file_list)
 
-# Función para importar un archivo
-import_file <- function(file_path) {
-  # Usamos la función import de la librería rio para importar el archivo
-  data <- rio::import(file_path)
+# Función para importar una lista de archivos
+import_list <- function(file_list) {
+  # Aplicamos la función import_file a cada archivo en la lista file_list
+  data_list <- lapply(file_list, import_file)
   
-  # Devolvemos los datos importados
-  return(data)
+  # Devolvemos la lista de dataframes
+  return(data_list)
 }
 
-# Aplicamos la función import_file a cada archivo en la lista file_list
-data_list <- lapply(file_list, import_file)
+# Crear las listas de rutas de archivos para cada categoría
+rutas_fuerza_trabajo <- file_list %>% str_subset("Fuerza de trabajo")
+rutas_no_ocupados <- file_list %>% str_subset("No ocupados")
+rutas_ocupados <- file_list %>% str_subset("Ocupados")
 
-# Combinamos todos los dataframes en uno solo usando rbindlist de la librería data.table
-combined_data <- data.table::rbindlist(data_list, fill = TRUE)
+# Importar los archivos y combinarlos en dataframes
+fuerza_trabajo_data <- import_list(rutas_fuerza_trabajo) %>% rbindlist(l=., use.names=T , fill=T)
+no_ocupados_data <- import_list(rutas_no_ocupados) %>% rbindlist(l=., use.names=T , fill=T)
+ocupados_data <- import_list(rutas_ocupados) %>% rbindlist(l=., use.names=T , fill=T)
 
-# Imprimir los datos combinados
-print(combined_data)
+
