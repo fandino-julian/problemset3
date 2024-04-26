@@ -38,4 +38,30 @@ fuerza_trabajo_data <- import_list(rutas_fuerza_trabajo) %>% rbindlist(l=., use.
 no_ocupados_data <- import_list(rutas_no_ocupados) %>% rbindlist(l=., use.names=T , fill=T)
 ocupados_data <- import_list(rutas_ocupados) %>% rbindlist(l=., use.names=T , fill=T)
 
+# Supongamos que 'fuerza_trabajo_data', 'no_ocupados_data' y 'ocupados_data' son tus dataframes
+
+# 2.1 Creación de bases de datos
+# Sumar el número de individuos por categoría, teniendo en cuenta el factor de expansión
+fuerza_trabajo_sum <- fuerza_trabajo_data[FT == 1 | PET == 1, sum(FEX_C18), by = MES]
+ocupados_sum <- ocupados_data[FT == 1, sum(FEX_C18), by = MES]
+no_ocupados_sum <- no_ocupados_data[DSI == 1, sum(FEX_C18), by = MES]
+
+# Renombrar las columnas para que sean más descriptivas
+setnames(fuerza_trabajo_sum, "V1", "Fuerza_laboral")
+setnames(ocupados_sum, "V1", "Ocupados")
+setnames(no_ocupados_sum, "V1", "Desempleados")
+
+# 2.2 Colapsar datos a nivel mensual
+# Unificar todas las bases de datos en una única base llamada Output
+Output <- merge(fuerza_trabajo_sum, ocupados_sum, by = "MES", all = TRUE)
+Output <- merge(Output, no_ocupados_sum, by = "MES", all = TRUE)
+
+# 2.3 Tasas de desempleo y ocupación
+# Calcular las tasas
+Output$Tasa_desempleo <- Output$Desempleados / Output$Fuerza_laboral
+Output$Tasa_ocupacion <- Output$Ocupados / Output$Fuerza_laboral
+
+# Imprimir la base de datos Output
+print(Output)
+
 
