@@ -9,11 +9,10 @@ library(rio)
 library(data.table)
 library(tidyverse)
 
-# Establecer la ruta de la carpeta input
+# ruta de la carpeta input
 ruta_input <- "~/Desktop/R/Problem sets/ps3/pset-3/input"
 
 # Crear un vector con los nombres de los archivos en la carpeta input
-# Usamos full.names = TRUE para obtener la ruta completa de cada archivo
 file_list <- list.files(path = ruta_input, recursive = TRUE, full.names = TRUE)
 
 # Imprimir la lista de archivos
@@ -28,6 +27,15 @@ import_list <- function(file_list) {
   return(data_list)
 }
 
+# Función para importar un archivo
+import_file <- function(file_path) {
+  # Usamos la función import de la librería rio para importar el archivo
+  data <- rio::import(file_path)
+  
+  # Devolvemos los datos importados
+  return(data)
+}
+
 # Crear las listas de rutas de archivos para cada categoría
 rutas_fuerza_trabajo <- file_list %>% str_subset("Fuerza de trabajo")
 rutas_no_ocupados <- file_list %>% str_subset("No ocupados")
@@ -38,7 +46,7 @@ fuerza_trabajo_data <- import_list(rutas_fuerza_trabajo) %>% rbindlist(l=., use.
 no_ocupados_data <- import_list(rutas_no_ocupados) %>% rbindlist(l=., use.names=T , fill=T)
 ocupados_data <- import_list(rutas_ocupados) %>% rbindlist(l=., use.names=T , fill=T)
 
-# Supongamos que 'fuerza_trabajo_data', 'no_ocupados_data' y 'ocupados_data' son tus dataframes
+#'fuerza_trabajo_data', 'no_ocupados_data' y 'ocupados_data' son los dataframes
 
 # 2.1 Creación de bases de datos
 # Sumar el número de individuos por categoría, teniendo en cuenta el factor de expansión
@@ -46,7 +54,7 @@ fuerza_trabajo_sum <- fuerza_trabajo_data[FT == 1 | PET == 1, sum(FEX_C18), by =
 ocupados_sum <- ocupados_data[FT == 1, sum(FEX_C18), by = MES]
 no_ocupados_sum <- no_ocupados_data[DSI == 1, sum(FEX_C18), by = MES]
 
-# Renombrar las columnas para que sean más descriptivas
+# Renombrar columnas
 setnames(fuerza_trabajo_sum, "V1", "Fuerza_laboral")
 setnames(ocupados_sum, "V1", "Ocupados")
 setnames(no_ocupados_sum, "V1", "Desempleados")
@@ -63,5 +71,22 @@ Output$Tasa_ocupacion <- Output$Ocupados / Output$Fuerza_laboral
 
 # Imprimir la base de datos Output
 print(Output)
+
+##3.GGPLOT
+# Cargar la librería ggplot2
+library(ggplot2)
+
+# Reorganizar los datos para que las tasas estén en una sola columna
+Output_long <- Output %>% 
+  tidyr::pivot_longer(cols = c(Tasa_desempleo, Tasa_ocupacion), 
+                      names_to = "Tasa", 
+                      values_to = "Valor")
+
+# Crear el gráfico
+ggplot(Output_long, aes(x = MES, y = Valor, color = Tasa)) +
+  geom_line() +
+  labs(x = "Mes", y = "Tasa", color = "Tipo de tasa",
+       title = "Tasas de desempleo y ocupación por mes") +
+  theme_minimal()
 
 
